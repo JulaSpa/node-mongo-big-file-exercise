@@ -4,13 +4,17 @@ const upload = async (req, res) => {
     const {file} = req;
     /* Mètodo post para agregar el archivo */
     try {
-       /* Convierto csv a json */
-       await csv().fromFile(file.path)
-       /* Recorro el json y lo inserto en la base de datos*/
-        .then(e=>Records.insertMany(e)) 
-        return res.status(201).json({
-            msg: 'Status 201',
-          });
+      /* Convierto el archivo en array */
+      const array = await csv().fromFile(file.path)
+      /* Limito la carga a 1000 para optimizar los recursos */
+      const chunk = 1000;
+      /* recorro el array limitandolo a 1000 */
+      for (let i =0; i < array.length; i+= chunk){
+        const ch = array.slice(i, i + chunk )
+        await Records.insertMany(ch)
+        return res.send("archivo cargado")
+      }
+      
       } catch (error) {
         return res.status(500).json({
           msg: 'Status 500: internal server error',
